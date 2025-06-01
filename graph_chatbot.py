@@ -6,44 +6,52 @@ from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
 from typing import Annotated
 
-# 🔑 Set your Groq API key
-GROQ_API_KEY = "your_groq_api_key_here"
+# 🔐 Your Groq API key
+GROQ_API_KEY = "your_groq_api_key_here"  # Replace this
 
-# ✅ Initialize LLM
-llm = ChatGroq(api_key=GROQ_API_KEY, model_name="llama3-8b-8192")
+# ✅ Initialize LLM with a valid model
+llm = ChatGroq(
+    api_key=GROQ_API_KEY,
+    model_name="llama3-8b-8192"  # Supported model
+)
 
 # 📦 Define the state structure
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
-# 💬 Define chatbot logic
+# 💬 Chatbot logic
 def chatbot(state: State) -> State:
-    return {"messages": llm.invoke(state["messages"])}
+    return {
+        "messages": llm.invoke(state["messages"])
+    }
 
-# 🧠 Build LangGraph
+# 🧠 Build the graph
 graph_builder = StateGraph(State)
+
+# ✅ Add chatbot node and edges
 graph_builder.add_node("chatbot", chatbot)
 graph_builder.add_edge(START, "chatbot")
 graph_builder.add_edge("chatbot", END)
 
-# ✅ Required trigger (fixes 'No event triggers defined in `on`')
+# ✅ REQUIRED: define event trigger
 graph_builder.on("chatbot", lambda state: END)
 
-# 🔁 Compile graph
+# ✅ Compile the graph
 graph = graph_builder.compile()
 
-# 💬 Run chatbot loop
+# 🔁 Interactive chat loop
 if __name__ == "__main__":
-    print("🤖 LangGraph Chatbot Ready (Graph 1)")
-    print("Type 'q' or 'quit' to exit.\n")
+    print("🤖 LangGraph Chatbot Ready! Type 'q' to quit.\n")
 
     while True:
         user_input = input("User: ")
-        if user_input.lower() in ["q", "quit"]:
-            print("Goodbye! 👋")
+        if user_input.lower() in ['q', 'quit']:
+            print("👋 Goodbye! Thanks for using LangGraph Chatbot.")
             break
 
-        for event in graph.stream({"messages": [{"role": "user", "content": user_input}]}):
+        for event in graph.stream({
+            "messages": [{"role": "user", "content": user_input}]
+        }):
             for value in event.values():
                 if "messages" in value:
                     for msg in value["messages"]:
